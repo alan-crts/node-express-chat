@@ -39,11 +39,10 @@
             <div class="conversation-list">
                 <ul class="" id="conversation-list">
                     <li class="item"><a href="#"><i class="fa fa-list-alt"></i><span>Dashboard</span></a></li>
-                    <li class="item active">
+                    <li class="item" id="general-tab">
                         <a href="#">
                             <i class="fa fa-user"></i>
                             <span>Général</span>
-                            <i class="fa fa-times"></i>
                         </a>
                     </li>
                 </ul>
@@ -110,7 +109,7 @@
             <p class="modal__description">user id : <span id="modal-user-id"></span></p>
             <p class="modal__description"><span id="modal-nb-messages"></span> messages envoyées</p>
 
-            <button class="button-default modal__button-width"> 
+            <button class="button-default modal__button-width" id="private-button"> 
 				Conversation privée
 			</button>
             <button class="modal__button-link close-modal" id="modal-close-button"> 

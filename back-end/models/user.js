@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const randtoken = require('rand-token');
 
 const userSchema = mongoose.Schema({
     username: { type: String, required: true, unique: true },

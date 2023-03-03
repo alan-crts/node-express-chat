@@ -1,6 +1,6 @@
 let userInfo = {};
 let numberOfMessages = 0;
-
+let notified = [];
 (function() {
     document.getElementById("modal-close-button").addEventListener('click', closeModal)
 
@@ -36,12 +36,13 @@ let numberOfMessages = 0;
                     <a href="#">
                         <i class="fa fa-user"></i>
                         <span>${data.username}</span>
-                        <i class="fa fa-times"></i>
                     </a>
                 </li>`;
         })
+        document.getElementById('general-tab').children[0].href = '/front-end/chat.html';
     } else {
         paramUserId = "all";
+        document.getElementById('general-tab').classList.add('active');
     }
 
     fetch(`${server}/user/self`, {
@@ -58,7 +59,6 @@ let numberOfMessages = 0;
         if (data.id) {
             userInfo = data;
             let url = paramUserId === "all" ? `${server}/message` : `${server}/message/${paramUserId}`;
-            console.log(url)
             fetch(`${url}`, {
                 headers: {
                     'Content-Type': 'application/json',
@@ -90,7 +90,11 @@ let numberOfMessages = 0;
     function sendMessage() {
         let message = document.getElementById('message-input').value;
         if (message) {
-            socket.emit('message', { message });
+            if (paramUserId === "all") {
+                socket.emit('message', { message });
+            } else {
+                socket.emit('message', { message, receiverId: paramUserId });
+            }
             document.getElementById('message-input').value = '';
         }
     }
@@ -133,6 +137,49 @@ let numberOfMessages = 0;
         let message = data.message;
         let username = data.username;
         let userId = data.userId;
+        let receiverId = data.receiverId;
+
+        if (receiverId && (receiverId === userInfo.id || receiverId === paramUserId)) {
+            //send notification
+            if (paramUserId === "all") {
+                if (notified.includes(userId)) {
+                    let badge = document.getElementById(`badge-${userId}`);
+                    badge.dataset.badge = parseInt(badge.dataset.badge) + 1;
+                } else {
+                    notified.push(userId);
+                    document.getElementById('conversation-list').innerHTML += `
+                    <li class="item">
+                        <a href="/front-end/chat.html?userid=${userId}" class="notification-badges">
+                            <i class="fa fa-user"></i>
+                            <span data-badge="1" id="badge-${userId}">${username}</span>
+                        </a>
+                    </li>`;
+                }
+                return;
+            }
+
+            numberOfMessages++;
+            document.getElementById('nb-messages').innerText = numberOfMessages;
+
+            addMessage(message, username, userId, new Date());
+        } else {
+            if (paramUserId !== "all") return;
+
+            numberOfMessages++;
+            document.getElementById('nb-messages').innerText = numberOfMessages;
+
+            addMessage(message, username, userId, new Date());
+        }
+    })
+
+    socket.on(userInfo.privateToken, (data) => {
+        if (paramUserId === "all") return;
+
+        let message = data.message;
+        let username = data.username;
+        let userId = data.userId;
+
+        if (userId !== paramUserId) return;
 
         numberOfMessages++;
         document.getElementById('nb-messages').innerText = numberOfMessages;
@@ -146,7 +193,7 @@ let numberOfMessages = 0;
 
         users.forEach((user) => {
             let userElement = document.createElement('li');
-            userElement.innerHTML = `<span class="status online"><i class="fa fa-circle-o"></i></span><span>${user.username}</span>`;
+            userElement.innerHTML = `<span class="status online"><i class="fa-solid fa-circle"></i></span><span>${user.username}</span>`;
             userElement.addEventListener('click', () => {
                 fetch(`${server}/user/${user.userId}`, {
                     headers: {
@@ -159,6 +206,9 @@ let numberOfMessages = 0;
                     document.getElementById('modal-username').innerText = data.username;
                     document.getElementById('modal-nb-messages').innerText = data.numberOfMessages;
                     document.getElementById('modal-user-id').innerText = data.id;
+                    document.getElementById('private-button').onclick = () => {
+                        document.location.href = `/front-end/chat.html?userid=${data.id}`;
+                    }
                     document.getElementById('modal-container').classList.add('show-modal')
                 })
             })
