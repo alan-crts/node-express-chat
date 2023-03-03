@@ -9,7 +9,7 @@ let numberOfMessages = 0;
         modalContainer.classList.remove('show-modal');
     }
 
-    const server = 'http://172.20.10.2:3000'
+    const server = 'http://127.0.0.1:3000'
     const socket = io(server, { auth: { token: localStorage.getItem('token') } });
     // check if param userid in url
     const urlParams = new URLSearchParams(window.location.search);
@@ -25,15 +25,24 @@ let numberOfMessages = 0;
         }).then((res) => {
             if (res.status === 404) {
                 document.location.href = '/front-end/chat.html';
+            } else if (res.status === 401) {
+                document.location.href = '/front-end/auth/login.html';
+            } else if (res.status === 200) {
+                return res.json()
             }
+        }).then((data) => {
+            document.getElementById('conversation-list').innerHTML += `
+            <li class="item active">
+                    <a href="#">
+                        <i class="fa fa-user"></i>
+                        <span>${data.username}</span>
+                        <i class="fa fa-times"></i>
+                    </a>
+                </li>`;
         })
     } else {
         paramUserId = "all";
     }
-
-    socket.on('notification', (data) => {
-        console.log('Message depuis le seveur:', data);
-    })
 
     fetch(`${server}/user/self`, {
         headers: {
