@@ -1,17 +1,27 @@
-module.exports = function (io) {
+const sMessage = require('../models/message');
 
-  io.on('connection', (socket) => {
-    console.log(`Connecté au client ${socket.id}`)
-    io.emit('notification', { type: 'new_user', data: socket.id });
+module.exports = function(io) {
 
-    // Listener sur la déconnexion
-    socket.on('disconnect', () => {
-      console.log(`user ${socket.id} disconnected`);
-      io.emit('notification', { type: 'removed_user', data: socket.id });
-    });
+    io.on('connection', (socket) => {
+        console.log(`Connecté au client ${socket.id}`)
+        io.emit('notification', { type: 'new_user', data: socket.id });
 
-    socket.on('...', (msg) => {
+        // Listener sur la déconnexion
+        socket.on('disconnect', () => {
+            console.log(`user ${socket.id} disconnected`);
+            io.emit('notification', { type: 'removed_user', data: socket.id });
+        });
 
-    });
-  })
+        socket.on('message', (msg) => {
+            console.log(socket.username, msg);
+            sMessage({
+                message: msg.message,
+                userId: socket.userId,
+                username: socket.username,
+                receiverId: null
+            }).save();
+
+            io.emit('message', { message: msg.message, username: socket.username, userId: socket.userId });
+        });
+    })
 }

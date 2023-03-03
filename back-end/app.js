@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-
+const jwt = require('jsonwebtoken');
 module.exports = function(app, server) {
 
     mongoose.connect(`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_URL}/${process.env.DB_NAME}?retryWrites=true&w=majority`, {
@@ -27,6 +27,21 @@ module.exports = function(app, server) {
         }
     })
 
+    io.use((socket, next) => {
+        const token = socket.handshake.auth.token;
+        if (token) {
+            const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+            const userId = decodedToken.userId;
+
+            socket.userId = userId;
+            socket.username = decodedToken.username;
+
+            next();
+        } else {
+            next(new Error('Authentication error'));
+        }
+    });
+
     require('./socket/chat')(io);
 
     app.use(function(req, res, next) {
@@ -39,4 +54,7 @@ module.exports = function(app, server) {
 
     const userRoutes = require('./routes/user');
     app.use('/user', userRoutes);
+
+    const messageRoutes = require('./routes/message');
+    app.use('/message', messageRoutes);
 }
