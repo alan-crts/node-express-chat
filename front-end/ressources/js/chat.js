@@ -26,19 +26,23 @@ let userInfo = {};
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
-            }).then((res) => {
-                return res.json()
-            }).then((data) => {
-                data.forEach((message) => {
-                    addMessage(message.message, message.username, message.userId);
+            }).then((resMessages) => {
+                return resMessages.json()
+            }).then(async(dataMessages) => {
+                document.getElementById('title').innerHTML += ` - ${data.username}`;
 
-                    let element = document.getElementsByClassName("page-loader")[0];
-
-                    element.classList.add("fade-out");
-                    setTimeout(() => {
-                        element.remove();
-                    }, 1000);
+                await dataMessages.forEach((message) => {
+                    addMessage(message.message, message.username, message.userId, message.timestamp);
                 })
+
+                document.getElementsByClassName('chat-list')[0].scrollTop = document.getElementsByClassName('chat-list')[0].scrollHeight;
+
+                let element = document.getElementsByClassName("page-loader")[0];
+
+                element.classList.add("fade-out");
+                setTimeout(() => {
+                    element.remove();
+                }, 1000);
             })
         }
     })
@@ -53,9 +57,17 @@ let userInfo = {};
         }
     }
 
-    function addMessage(message, username, userId) {
+    function addMessage(message, username, userId, timestamp) {
         let messageContainer = document.getElementById('chat-list');
         let messageElement = document.createElement('li');
+
+        let time = new Date(timestamp);
+        let now = new Date();
+        let timeString = '';
+        if (time.getDate() !== now.getDate() || time.getMonth() !== now.getMonth() || time.getFullYear() !== now.getFullYear()) {
+            timeString = time.getDate() + '/' + (time.getMonth() < 10 ? "0" : "") + time.getMonth() + '/' + time.getFullYear() + ' '
+        }
+        timeString += time.getHours() + ':' + (time.getMinutes() < 10 ? "0" : "") + time.getMinutes();
 
         if (userId === userInfo.id) {
             messageElement.classList.add('me');
@@ -66,11 +78,11 @@ let userInfo = {};
             </div>
             <div class="message">
                 <p>${message}</p>
-                <span class="msg-time">5:00 pm</span>
+                <span class="msg-time">${timeString}</span>
             </div>`
 
         messageContainer.appendChild(messageElement);
-        messageContainer.scrollTop = messageContainer.scrollHeight;
+        document.getElementsByClassName('chat-list')[0].scrollTop = document.getElementsByClassName('chat-list')[0].scrollHeight;
     }
 
     document.getElementById('send-btn').addEventListener('click', sendMessage)
@@ -84,6 +96,16 @@ let userInfo = {};
         let username = data.username;
         let userId = data.userId;
 
-        addMessage(message, username, userId);
+        addMessage(message, username, userId, new Date());
+    })
+
+    socket.on('list_connected_users', (users) => {
+        let list = document.getElementById('list-connected-users');
+        list.innerHTML = '';
+        users.forEach((user) => {
+            let userElement = document.createElement('li');
+            userElement.innerHTML = `<li><span class="status online"><i class="fa fa-circle-o"></i></span><span>${user}</span></li>`;
+            list.appendChild(userElement);
+        })
     })
 })()

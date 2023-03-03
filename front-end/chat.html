@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="/front-end/ressources/css/loader.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.min.js" integrity="sha512-N5JbZMETkl+0SZh5l8OA2VxSfF120owfQyy54iAXTJIKuqAn3A9TrNz1ypB55o8aSU5MxaodEgv74wGUvgUynQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script type="text/javascript" src="/front-end/ressources/js/chat.js" defer></script>
+    <script src="https://kit.fontawesome.com/b1312a1aed.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -27,7 +28,7 @@
                 <i class="fa fa-circle"></i>
             </div>
             <div class="title">
-                <span>RIL - CHAT</span>
+                <span id="title">CHAT</span>
             </div>
             <div class="expand">
                 <i class="fa fa-expand"></i>
@@ -62,15 +63,7 @@
                 <div class="title"><b>Général</b><i class="fa fa-search"></i></div>
                 <div class="chat-list">
                     <ul id="chat-list">
-                        <li class="">
-                            <div class="name">
-                                <span class="">Christian Smith</span>
-                            </div>
-                            <div class="message">
-                                <p>World</p>
-                                <span class="msg-time">5:01 pm</span>
-                            </div>
-                        </li>
+
                     </ul>
                 </div>
                 <div class="input-area">
@@ -91,7 +84,7 @@
                 </ul>
                 <ul class="tabs-container">
                     <li class="active">
-                        <ul class="member-list">
+                        <ul class="member-list" id="list-connected-users">
                             <li><span class="status online"><i class="fa fa-circle-o"></i></span><span>John Doe</span>
                             </li>
                             <li><span class="status online"><i class="fa fa-circle-o"></i></span><span>Christian
