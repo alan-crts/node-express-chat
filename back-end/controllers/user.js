@@ -1,4 +1,5 @@
 const sUser = require('../models/user');
+const sMessage = require('../models/message');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -52,9 +53,18 @@ exports.getAllUser = (req, res, next) => {
 }
 
 exports.getOneUser = (req, res, next) => {
-    sUser.findOne({ _id: req.params.id })
-        .then(thing => res.status(200).json(thing))
-        .catch(error => res.status(404).json({ error }));
+    if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+        return res.status(404).json({ error: 'Invalid id' });
+    } else {
+        sUser.findOne({ _id: req.params.id })
+            .then(user => {
+                sMessage.countDocuments({ userId: user._id })
+                    .then(messages => {
+                        res.status(200).json({ id: user._id, username: user.username, numberOfMessages: messages });
+                    })
+                    .catch(error => res.status(404).json({ error }));
+            })
+    }
 }
 
 exports.getSelf = (req, res, next) => {

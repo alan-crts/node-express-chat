@@ -6,3 +6,12 @@ exports.getAllMessage = (req, res, next) => {
         .then(messages => res.status(200).json(messages))
         .catch(error => res.status(400).json({ error }));
 }
+
+exports.getAllMessageWithSenderAndReceiver = (req, res, next) => {
+    //sort by date and get only message where receiver = req.params.id
+    sMessage.find({ $or: [{ receiverId: req.userId, userId: req.params.id }, { receiverId: req.params.id, userId: req.userId }] }).sort({ date: -1 })
+        .then(messages => {
+            res.status(200).json(messages)
+        })
+        .catch(error => res.status(400).json({ error }));
+}

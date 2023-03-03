@@ -13,7 +13,7 @@ loginForm.addEventListener("submit", async(e) => {
             let data = await responseData.json();
             localStorage.setItem("token", data.token);
 
-            window.location.href = "/front-end/index.html";
+            window.location.href = "/front-end/chat.html";
         }
     } catch (error) {
         console.error(error);

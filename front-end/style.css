@@ -487,6 +487,11 @@ ul.tabs-container {
 
 .member-list>li {
     padding: 5px 0;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 .member-list>li .status {
