@@ -15,3 +15,25 @@ exports.getAllMessageWithSenderAndReceiver = (req, res, next) => {
         })
         .catch(error => res.status(400).json({ error }));
 }
+
+exports.getAllMessageUnreadbyUser = (req, res, next) => {
+    //get only message where receiver = connected user and readed = false and sort only userid with message count
+    sMessage.aggregate([
+            { $match: { receiverId: req.userId, read: false } },
+            {
+                $group: {
+                    _id: "$userId",
+                    username: { $first: "$username" },
+                    count: { $sum: 1 }
+                }
+            }
+        ])
+        .then(messages => res.status(200).json(messages))
+        .catch(error => res.status(400).json({ error }));
+}
+
+exports.setMessagesRead = (req, res, next) => {
+    sMessage.updateMany({ userId: req.params.id, receiverId: req.userId }, { $set: { read: true } })
+        .then(() => res.status(200).json({ message: 'Messages updated!' }))
+        .catch(error => res.status(400).json({ error }));
+}

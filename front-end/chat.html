@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="/front-end/ressources/css/loader.css">
     <link rel="stylesheet" href="/front-end/ressources/css/modal.css">
+    <link rel="stylesheet" href="/front-end/ressources/css/notification.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.min.js" integrity="sha512-N5JbZMETkl+0SZh5l8OA2VxSfF120owfQyy54iAXTJIKuqAn3A9TrNz1ypB55o8aSU5MxaodEgv74wGUvgUynQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script type="text/javascript" src="/front-end/ressources/js/chat.js" defer></script>
     <script src="https://kit.fontawesome.com/b1312a1aed.js" crossorigin="anonymous"></script>
@@ -21,6 +22,7 @@
         <div class="spinner"></div>
         <div class="txt">Online<br>Chat</div>
     </div>
+    <ul class="notifications"></ul>
     <div class="window-wrapper">
         <div class="window-title">
             <div class="dots">
@@ -31,14 +33,11 @@
             <div class="title">
                 <span id="title">CHAT</span>
             </div>
-            <div class="expand">
-                <i class="fa fa-expand"></i>
-            </div>
         </div>
         <div class="window-area">
             <div class="conversation-list">
                 <ul class="" id="conversation-list">
-                    <li class="item"><a href="#"><i class="fa fa-list-alt"></i><span>Dashboard</span></a></li>
+                    <li class="conversation-header">Conversation</li>
                     <li class="item" id="general-tab">
                         <a href="#">
                             <i class="fa fa-user"></i>
@@ -69,27 +68,16 @@
                 <div class="input-area">
                     <div class="input-wrapper">
                         <input type="text" value="" placeholder="Message here" id="message-input">
-                        <i class="fa fa-smile-o"></i>
                     </div>
                     <input type="button" value="Submit" class="send-btn" id="send-btn">
                 </div>
             </div>
             <div class="right-tabs">
-                <ul class="tabs">
-                    <li class="active">
-                        <a href="#"><i class="fa fa-users"></i></a>
-                    </li>
-                    <li><a href="#"><i class="fa fa-paperclip"></i></a></li>
-                    <li><a href="#"><i class="fa fa-link"></i></a></li>
-                </ul>
-                <ul class="tabs-container">
-                    <li class="active">
-                        <ul class="member-list" id="list-connected-users">
+                <div class="member-list-header">
+                    Utilisateurs connectés
+                </div>
+                <ul class="member-list" id="list-connected-users">
 
-                        </ul>
-                    </li>
-                    <li></li>
-                    <li></li>
                 </ul>
                 <i class="fa fa-cog"></i>
             </div>
@@ -97,7 +85,7 @@
     </div>
 
     <div class="modal__container" id="modal-container">
-        <div class="modal__content modal__content-effect" id="modal-content">
+        <div class="modal__content" id="modal-content">
             <div class="modal__close close-modal" title="Close">
                 <i class='bx bx-x'></i>
             </div>

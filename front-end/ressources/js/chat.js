@@ -1,40 +1,41 @@
 let userInfo = {};
 let numberOfMessages = 0;
+const notifications = document.querySelector(".notifications");
 
 (async function() {
-    document.getElementById("modal-close-button").addEventListener('click', closeModal)
+        document.getElementById("modal-close-button").addEventListener('click', closeModal)
 
-    function closeModal() {
-        const modalContainer = document.getElementById('modal-container')
-        modalContainer.classList.remove('show-modal');
-    }
-
-    function getOpenedConversation() {
-        return localStorage.getItem('openedConversation') ? JSON.parse(localStorage.getItem('openedConversation')) : {};
-    }
-
-    function addOpenedConversation(id, username) {
-        let openedCoversations = getOpenedConversation();
-        openedCoversations[id] = username;
-        localStorage.setItem('openedConversation', JSON.stringify(openedCoversations));
-    }
-
-    function removeConversation(id) {
-        let openedCoversations = getOpenedConversation();
-        delete openedCoversations[id];
-        localStorage.setItem('openedConversation', JSON.stringify(openedCoversations));
-        document.getElementById(`conversation-${id}`).remove();
-        if (id == paramUserId) {
-            document.location.href = '/front-end/chat.html';
+        function closeModal() {
+            const modalContainer = document.getElementById('modal-container')
+            modalContainer.classList.remove('show-modal');
         }
-    }
 
-    function addConversationHTML(id, username, active = false, badge = 0) {
-        document.getElementById('conversation-list').innerHTML += `
+        function getOpenedConversation() {
+            return localStorage.getItem('openedConversation') ? JSON.parse(localStorage.getItem('openedConversation')) : {};
+        }
+
+        function addOpenedConversation(id, username) {
+            let openedCoversations = getOpenedConversation();
+            openedCoversations[id] = username;
+            localStorage.setItem('openedConversation', JSON.stringify(openedCoversations));
+        }
+
+        function removeConversation(id) {
+            let openedCoversations = getOpenedConversation();
+            delete openedCoversations[id];
+            localStorage.setItem('openedConversation', JSON.stringify(openedCoversations));
+            document.getElementById(`conversation-${id}`).remove();
+            if (id == paramUserId) {
+                document.location.href = '/front-end/chat.html';
+            }
+        }
+
+        function addConversationHTML(id, username, active = false, badge = 0) {
+            document.getElementById('conversation-list').innerHTML += `
                         <li class="item${active == true ? " active" : ""}" id="conversation-${id}">
                                 <a href="${active == true ? "#" : "?userid=" + id}" class="notification-badges">
                                     <i class="fa fa-user"></i>
-                                    <span ${badge != 0 ? 'data-badge="1"' : ""} id="badge-${id}">${username}</span>
+                                    <span ${badge != 0 ? `data-badge="${badge}"` : ""} id="badge-${id}">${username}</span>
                                     <i class="fa fa-times"></i>
                                 </a>
                             </li>`;
@@ -42,6 +43,49 @@ let numberOfMessages = 0;
             e.preventDefault();
             removeConversation(id);
         })
+    }
+
+    function appendConversation() {
+        fetch(`${server}/message/user/unread`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        }).then((resunread) => {
+            return resunread.json()
+        }).then(async(dataunread) => {
+            await dataunread.forEach((unread) => {
+                addOpenedConversation(unread._id, unread.username);
+                addConversationHTML(unread._id, unread.username, false, unread.count);
+            })
+        }).then(() => {
+            let openedCoversations = getOpenedConversation();
+            for (const [key, value] of Object.entries(openedCoversations)) {
+                if (document.getElementById(`conversation-${key}`) == null) {
+                    addConversationHTML(key, value, key == paramUserId);
+                }
+            }
+        })
+    }
+
+    const removeToast = (toast) => {
+        toast.classList.add("hide");
+        if(toast.timeoutId) clearTimeout(toast.timeoutId); 
+        setTimeout(() => toast.remove(), 500); 
+    }
+    
+    const createToast = (message, type) => {
+        const toast = document.createElement("li"); 
+        toast.className = `toast ${type}`; 
+
+        toast.innerHTML = `<div class="column">
+                             <i class="fa-solid fa-circle-info"></i>
+                             <span>${message}</span>
+                          </div>
+                          <i class="fa-solid fa-xmark" onclick="removeToast(this.parentElement)"></i>`;
+        notifications.appendChild(toast);
+
+        toast.timeoutId = setTimeout(() => removeToast(toast), 3500);
     }
 
     const server = 'http://127.0.0.1:3000'
@@ -66,12 +110,23 @@ let numberOfMessages = 0;
             }
         }).then((data) => {
             addOpenedConversation(data.id, data.username);
+            //set message read
+            fetch(`${server}/message/user/read/${data.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            }).then(() => {
+                appendConversation()
+            })
 
             document.getElementById('conversation-name').innerText = `Conversation avec ${data.username}`;
         })
         document.getElementById('general-tab').children[0].href = '/front-end/chat.html';
     } else {
         paramUserId = "all";
+        appendConversation()
         document.getElementById('general-tab').classList.add('active');
     }
 
@@ -99,11 +154,6 @@ let numberOfMessages = 0;
             }).then((resMessages) => {
                 return resMessages.json()
             }).then(async(dataMessages) => {
-                let openedCoversations = getOpenedConversation();
-                for (const [key, value] of Object.entries(openedCoversations)) {
-                    addConversationHTML(key, value, key == paramUserId);
-                }
-
                 document.getElementById("user-name").innerText = data.username;
                 numberOfMessages = dataMessages.length;
 
@@ -209,6 +259,7 @@ let numberOfMessages = 0;
                     addOpenedConversation(userId, username);
                     addConversationHTML(userId, username, false, 1);
                 }
+                createToast(`${username} vous a envoyé un message privé :<br>${message.length > 25 ? message.substring(0, 25) + '...' : message}`, "info");
                 return;
             }
 
@@ -253,5 +304,11 @@ let numberOfMessages = 0;
             })
             list.appendChild(userElement);
         })
+    })
+
+    document.getElementById('modal-container').addEventListener('click', (e) => {
+        if (e.target.id === 'modal-container') {
+            document.getElementById('modal-container').classList.remove('show-modal')
+        }
     })
 })()
