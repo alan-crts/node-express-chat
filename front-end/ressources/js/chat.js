@@ -151,14 +151,32 @@ let numberOfMessages = 0;
         if (userId === userInfo.id) {
             messageElement.classList.add('me');
         }
-        messageElement.innerHTML = `
-            <div class="name">
-                <span class="">${username}</span>
-            </div>
-            <div class="message">
-                <p>${message}</p>
-                <span class="msg-time">${timeString}</span>
-            </div>`
+        messageElement.innerHTML += `<div class="name">
+        <span class="">${username}</span>
+        </div>
+        <div class="message">
+        <p>${message}</p>
+        <span class="msg-time">${timeString}</span>
+        </div>`;
+
+        messageElement.addEventListener('click', () => {
+            fetch(`${server}/user/${userId}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            }).then((res) => {
+                return res.json()
+            }).then((data) => {
+                document.getElementById('modal-username').innerText = data.username;
+                document.getElementById('modal-nb-messages').innerText = data.numberOfMessages;
+                document.getElementById('modal-user-id').innerText = data.id;
+                document.getElementById('private-button').onclick = () => {
+                    document.location.href = `/front-end/chat.html?userid=${data.id}`;
+                }
+                document.getElementById('modal-container').classList.add('show-modal')
+            })
+        })
 
         messageContainer.appendChild(messageElement);
         document.getElementsByClassName('chat-list')[0].scrollTop = document.getElementsByClassName('chat-list')[0].scrollHeight;

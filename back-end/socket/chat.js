@@ -36,8 +36,10 @@ module.exports = function(io) {
                     receiverId: msg.receiverId ? msg.receiverId : null,
                 }).save();
                 if (msg.receiverId) {
-                    let receiverSocketId = listConnectedUsers.find((user) => user.userId === msg.receiverId).socketId;
-                    io.to(receiverSocketId).emit('message', { message: msg.message, username: socket.username, userId: socket.userId, receiverId: msg.receiverId });
+                    let receiverSocket = listConnectedUsers.find((user) => user.userId === msg.receiverId);
+                    if (receiverSocket) {
+                        io.to(receiverSocket.socketId).emit('message', { message: msg.message, username: socket.username, userId: socket.userId, receiverId: msg.receiverId });
+                    }
                     io.to(socket.id).emit('message', { message: msg.message, username: socket.username, userId: socket.userId, receiverId: msg.receiverId });
                 } else {
                     io.emit('message', { message: msg.message, username: socket.username, userId: socket.userId });
