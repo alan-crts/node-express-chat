@@ -1,7 +1,7 @@
 let userInfo = {};
 let numberOfMessages = 0;
-let notified = [];
-(function() {
+
+(async function() {
     document.getElementById("modal-close-button").addEventListener('click', closeModal)
 
     function closeModal() {
@@ -9,15 +9,49 @@ let notified = [];
         modalContainer.classList.remove('show-modal');
     }
 
+    function getOpenedConversation() {
+        return localStorage.getItem('openedConversation') ? JSON.parse(localStorage.getItem('openedConversation')) : {};
+    }
+
+    function addOpenedConversation(id, username) {
+        let openedCoversations = getOpenedConversation();
+        openedCoversations[id] = username;
+        localStorage.setItem('openedConversation', JSON.stringify(openedCoversations));
+    }
+
+    function removeConversation(id) {
+        let openedCoversations = getOpenedConversation();
+        delete openedCoversations[id];
+        localStorage.setItem('openedConversation', JSON.stringify(openedCoversations));
+        document.getElementById(`conversation-${id}`).remove();
+        if (id == paramUserId) {
+            document.location.href = '/front-end/chat.html';
+        }
+    }
+
+    function addConversationHTML(id, username, active = false, badge = 0) {
+        document.getElementById('conversation-list').innerHTML += `
+                        <li class="item${active == true ? " active" : ""}" id="conversation-${id}">
+                                <a href="${active == true ? "#" : "?userid=" + id}" class="notification-badges">
+                                    <i class="fa fa-user"></i>
+                                    <span ${badge != 0 ? 'data-badge="1"' : ""} id="badge-${id}">${username}</span>
+                                    <i class="fa fa-times"></i>
+                                </a>
+                            </li>`;
+        document.getElementById(`conversation-${id}`).children[0].children[2].addEventListener('click', (e) => {
+            e.preventDefault();
+            removeConversation(id);
+        })
+    }
+
     const server = 'http://127.0.0.1:3000'
-    const socket = io(server, { auth: { token: localStorage.getItem('token') } });
-    // check if param userid in url
+        // check if param userid in url
     const urlParams = new URLSearchParams(window.location.search);
     let paramUserId = urlParams.get('userid');
 
     if (paramUserId) {
         //get user info
-        fetch(`${server}/user/${paramUserId}`, {
+        await fetch(`${server}/user/${paramUserId}`, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -31,19 +65,17 @@ let notified = [];
                 return res.json()
             }
         }).then((data) => {
-            document.getElementById('conversation-list').innerHTML += `
-            <li class="item active">
-                    <a href="#">
-                        <i class="fa fa-user"></i>
-                        <span>${data.username}</span>
-                    </a>
-                </li>`;
+            addOpenedConversation(data.id, data.username);
+
+            document.getElementById('conversation-name').innerText = `Conversation avec ${data.username}`;
         })
         document.getElementById('general-tab').children[0].href = '/front-end/chat.html';
     } else {
         paramUserId = "all";
         document.getElementById('general-tab').classList.add('active');
     }
+
+    const socket = io(server, { auth: { token: localStorage.getItem('token') } });
 
     fetch(`${server}/user/self`, {
         headers: {
@@ -67,7 +99,12 @@ let notified = [];
             }).then((resMessages) => {
                 return resMessages.json()
             }).then(async(dataMessages) => {
-                document.getElementById('title').innerHTML += ` - ${data.username}`;
+                let openedCoversations = getOpenedConversation();
+                for (const [key, value] of Object.entries(openedCoversations)) {
+                    addConversationHTML(key, value, key == paramUserId);
+                }
+
+                document.getElementById("user-name").innerText = data.username;
                 numberOfMessages = dataMessages.length;
 
                 document.getElementById('nb-messages').innerText = numberOfMessages;
@@ -141,19 +178,18 @@ let notified = [];
 
         if (receiverId && (receiverId === userInfo.id || receiverId === paramUserId)) {
             //send notification
-            if (paramUserId === "all") {
-                if (notified.includes(userId)) {
+            if (paramUserId !== userId && userId !== userInfo.id) {
+                let openedCoversations = getOpenedConversation();
+                if (openedCoversations[userId]) {
                     let badge = document.getElementById(`badge-${userId}`);
-                    badge.dataset.badge = parseInt(badge.dataset.badge) + 1;
+                    if (badge.dataset.badge) {
+                        badge.dataset.badge = parseInt(badge.dataset.badge) + 1;
+                    } else {
+                        badge.dataset.badge = 1;
+                    }
                 } else {
-                    notified.push(userId);
-                    document.getElementById('conversation-list').innerHTML += `
-                    <li class="item">
-                        <a href="/front-end/chat.html?userid=${userId}" class="notification-badges">
-                            <i class="fa fa-user"></i>
-                            <span data-badge="1" id="badge-${userId}">${username}</span>
-                        </a>
-                    </li>`;
+                    addOpenedConversation(userId, username);
+                    addConversationHTML(userId, username, false, 1);
                 }
                 return;
             }
@@ -170,21 +206,6 @@ let notified = [];
 
             addMessage(message, username, userId, new Date());
         }
-    })
-
-    socket.on(userInfo.privateToken, (data) => {
-        if (paramUserId === "all") return;
-
-        let message = data.message;
-        let username = data.username;
-        let userId = data.userId;
-
-        if (userId !== paramUserId) return;
-
-        numberOfMessages++;
-        document.getElementById('nb-messages').innerText = numberOfMessages;
-
-        addMessage(message, username, userId, new Date());
     })
 
     socket.on('list_connected_users', (users) => {
